@@ -1,2 +1,6 @@
 data/
 logs/
+__pycache__/
+*.py[cod]
+*.ckpt
+events.out.tfevents.*

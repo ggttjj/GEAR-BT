@@ -1,7 +1,7 @@
 fit:
   model:
     backbone:
-      class_path: src.model.GEAR
+      class_path: src.models.BTGEAR.BTGEAR
       init_args:
         max_len: 50
         d_model: 32
@@ -29,18 +29,18 @@ fit:
     predict_only_target: False
 
   trainer:
-    default_root_dir: logs/retail/full
+    default_root_dir: logs/retail/btgear
     callbacks:
       - class_path: pytorch_lightning.callbacks.EarlyStopping
         init_args:
           monitor: 'Val:NDCG@10'
           patience: 30
-          mode: max  
+          mode: max
     devices: [0]
     accelerator: gpu
     accumulate_grad_batches: 8
   seed_everything: 42
-    
+
   optimizer:
     class_path: torch.optim.Adam
     init_args:
