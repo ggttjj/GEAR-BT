@@ -1,18 +1,98 @@
 
-# GEAR: Generalized Alternating Regressor for Multi-Behavior Sequential Recommendation
-This is the implementation for the paper "GEAR: Generalized Alternating Regressor for Multi-Behavior Sequential Recommendation".
+# BT-GEAR: Behavior-Transition-Aware Temporal Decay for GEAR
 
-![fig](GEAR.png)
+BT-GEAR is a research prototype for multi-behavior sequential recommendation. It extends the official implementation of **GEAR: Generalized Alternating Regressor for Multi-Behavior Sequential Recommendation** with a behavior-transition-aware temporal attention bias.
 
-## Quick Start
-0. install pytorch and other dependencies
+> This repository is based on [Gnimixy/GEAR](https://github.com/Gnimixy/GEAR). The upstream Git history is preserved, and the original `src/models/GEAR.py` is not overwritten.
+
+![GEAR architecture](GEAR.png)
+
+## Motivation
+
+GEAR models a head-wise temporal decay in its behavior-sequence attention. Its temporal bias can be summarized as
+
+$$
+\Phi_{ij}^{(h)}=-\alpha_h\log(1+\Delta t_{ij}),
+$$
+
+where the decay coefficient $\alpha_h$ depends on the attention head but not on the behavior types. Consequently, the same head applies the same temporal decay to different transitions such as `pv -> buy`, `cart -> buy`, and `fav -> buy`.
+
+BT-GEAR conditions the decay coefficient on both the current query behavior $b_i$ and the historical key behavior $b_j$:
+
+$$
+\Phi_{ij}^{(h)}=-\operatorname{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
+$$
+
+The `softplus` function keeps every decay coefficient non-negative. The transition parameters are initialized from GEAR's original head-wise slopes, so BT-GEAR starts from the same temporal bias as GEAR and learns transition-specific differences during training.
+
+Only the temporal bias of the lower behavior-attention blocks is changed. The item branch, upper alternating Transformer, prediction heads, and training loss remain unchanged, making the comparison with GEAR controlled and interpretable.
+
+## Main Files
+
+- `src/models/BTGEAR.py`: behavior-transition-aware temporal decay model.
+- `src/configs/retail_btgear.yaml`: BT-GEAR configuration for the Retail dataset.
+- `src/models/GEAR.py`: unchanged upstream GEAR implementation.
+- `src/configs/retail.yaml`: memory-safe baseline configuration used on an 8 GB GPU.
+
+## Environment
+
+Install PyTorch for your CUDA version, then install the remaining dependencies:
+
 ```bash
 pip install -r requirements.txt
-```
-1. run the model with a `yaml` configuration file like following:
-```bash
-python run.py --config src/configs/retail.yaml fit 
+pip install -U "jsonargparse[signatures]>=4.27.7"
 ```
 
 ## Dataset
-Due to file size limitations, we have not uploaded all of the data. You can download the datasets from [Google Drive](https://drive.google.com/drive/folders/1RxTTZtcjdcK063pkRblRxzVDqVZpZX-R?usp=sharing) and put them into the data/ folder.
+
+Download the datasets from the [dataset folder provided by the original GEAR repository](https://drive.google.com/drive/folders/1RxTTZtcjdcK063pkRblRxzVDqVZpZX-R?usp=sharing) and place the Retail data at:
+
+```text
+data/retail.txt
+```
+
+The dataset and generated preprocessing files are intentionally excluded from Git.
+
+## Training
+
+Train the memory-safe GEAR baseline:
+
+```bash
+python run.py --config src/configs/retail.yaml fit
+```
+
+Train BT-GEAR:
+
+```bash
+python run.py --config src/configs/retail_btgear.yaml fit
+```
+
+The supplied Retail configurations use `train_batch_size=16` and `accumulate_grad_batches=8`, retaining an effective batch size of 128 while avoiding the full-vocabulary CUDA out-of-memory error on an 8 GB GPU.
+
+To inspect the curves:
+
+```bash
+tensorboard --logdir logs --port 6006
+```
+
+Then open `http://localhost:6006`.
+
+## Preliminary Results
+
+The following are best validation results from the current single-seed (`seed=42`) Retail pre-study. The original GEAR run was trained through Epoch 82; BT-GEAR was still training when these values were recorded.
+
+| Metric | GEAR best | Epoch | BT-GEAR best | Epoch | Relative change |
+|---|---:|---:|---:|---:|---:|
+| NDCG@10 | 0.715395 | 80 | **0.715942** | 26 | **+0.08%** |
+| Recall@10 | 0.830635 | 80 | **0.832336** | 27 | **+0.20%** |
+| NDCG@5 | 0.696784 | 80 | **0.697569** | 26 | **+0.11%** |
+| Recall@5 | 0.773137 | 80 | **0.775801** | 27 | **+0.34%** |
+| NDCG@1 | **0.608378** | 76 | 0.608017 | 26 | -0.06% |
+
+BT-GEAR currently improves four of the five best-to-best ranking metrics and improves all five metrics when compared with GEAR at the same Epoch 27. These results support the feasibility of behavior-transition-aware temporal decay, but they are preliminary: multiple random seeds, additional datasets, and statistical significance tests are still required for a publication-level conclusion.
+
+## Reproducibility Notes
+
+- Training outputs, checkpoints, TensorBoard events, and datasets are excluded by `.gitignore`.
+- The Windows-compatible datamodule type annotation and 8 GB GPU configuration changes are included in the repository.
+- For an exact resume, pass a checkpoint using `fit --ckpt_path <checkpoint>`; the checkpoint itself is not uploaded.
