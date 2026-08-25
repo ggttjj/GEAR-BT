@@ -1,0 +1,15 @@
+{
+  "checkpoint": "logs/retail/btgear/lightning_logs/version_0/checkpoints/epoch=31-step=36992.ckpt",
+  "checkpoint_epoch_zero_based": 31,
+  "global_step": 36992,
+  "state_dict_key": "backbone.transition_decay_logits",
+  "behavior_order": [
+    "cart",
+    "pv",
+    "fav",
+    "buy"
+  ],
+  "matrix_semantics": "row=query/current behavior, column=key/historical behavior",
+  "coefficient_min": 0.0063903131522238255,
+  "coefficient_max": 2.9007959365844727
+}

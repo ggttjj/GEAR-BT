@@ -31,6 +31,7 @@ Only the temporal bias of the lower behavior-attention blocks is changed. The it
 
 - `src/models/BTGEAR.py`: behavior-transition-aware temporal decay model.
 - `src/configs/retail_btgear.yaml`: BT-GEAR configuration for the Retail dataset.
+- `scripts/visualize_transition_decay.py`: checkpoint-to-heatmap visualization script.
 - `src/models/GEAR.py`: unchanged upstream GEAR implementation.
 - `src/configs/retail.yaml`: memory-safe baseline configuration used on an 8 GB GPU.
 
@@ -76,6 +77,31 @@ tensorboard --logdir logs --port 6006
 ```
 
 Then open `http://localhost:6006`.
+
+## Visualizing the Learned Transition Decay
+
+The visualization script automatically loads the newest BT-GEAR checkpoint and exports the per-head matrices, their mean matrix, CSV files, and metadata:
+
+```bash
+python scripts/visualize_transition_decay.py \
+  --output-dir figures/transition_decay
+```
+
+An explicit checkpoint can also be supplied:
+
+```bash
+python scripts/visualize_transition_decay.py \
+  --checkpoint "path/to/checkpoint.ckpt" \
+  --output-dir figures/transition_decay
+```
+
+Rows represent the current query behavior $b_i$, while columns represent the historical key behavior $b_j$. A larger coefficient produces faster temporal decay and a stronger attention penalty for an old interaction; a smaller coefficient preserves that transition's influence for longer.
+
+The following heatmaps were extracted from the Epoch 31 Retail checkpoint:
+
+![Learned behavior-transition decay heatmaps](figures/transition_decay_epoch31/transition_decay_heatmaps.png)
+
+The coefficients vary substantially across both behavior transitions and attention heads (approximately 0.006 to 2.901 in this checkpoint). This confirms that the model has moved away from its behavior-agnostic initialization and learned head-specific transition patterns. The heatmap is an interpretation of learned parameters rather than evidence of a causal behavioral relationship.
 
 ## Preliminary Results
 
