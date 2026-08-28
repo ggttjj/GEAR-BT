@@ -11,6 +11,8 @@ BT-GEAR is a research prototype for multi-behavior sequential recommendation. It
 
 BT-GEAR preserves GEAR's item-attention branch, behavior-attention branch, alternating cross-signal fusion, and autoregressive prediction heads. The architectural change is localized to the temporal bias in behavior-specific attention, where the fixed head-wise coefficient is replaced by a learnable behavior-transition-aware decay matrix.
 
+> **Behavior-count note:** The $4\times4$ matrix in the diagram is the current experimental setting with `n_b=4`, not a hard-coded model limit. For a dataset with $B$ valid behavior types, the general transition matrix is $B\times B$. The implementation allocates one additional row and column for padding index 0.
+
 ## Motivation
 
 GEAR models a head-wise temporal decay in its behavior-sequence attention. Its temporal bias can be summarized as
@@ -73,7 +75,15 @@ $$
 \Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
 $$
 
-For Retail with two attention heads and four valid behavior types, GEAR-T learns 2 valid decay coefficients, BT-GEAR-S learns $4\times4=16$, and BT-GEAR learns $2\times4\times4=32$. The implementation also stores a padding row and column, so the actual tensors have shapes $5\times5$ and $2\times5\times5$; the padding entries are excluded from interpretation and visualization.
+Let $H$ denote the number of attention heads and $B$ the number of valid behavior types. The behavior count is supplied through the `n_b` configuration field and is not fixed in the model code.
+
+| Variant | Valid decay coefficients | Stored parameter shape |
+|---|---:|---:|
+| GEAR-T | $H$ | $[H]$ |
+| BT-GEAR-S | $B^2$ | $[B+1,B+1]$ |
+| BT-GEAR | $HB^2$ | $[H,B+1,B+1]$ |
+
+For the current experiments, $H=2$ and $B=4$. GEAR-T therefore learns 2 coefficients, BT-GEAR-S has 16 valid behavior-transition entries and 25 stored parameters, and BT-GEAR has 32 valid entries and 50 stored parameters. Entries involving padding are excluded from interpretation and visualization. A dataset with a different number of behaviors can set a different `n_b`, provided that its behavior IDs are mapped consistently from 1 to $B$; checkpoints with incompatible matrix shapes cannot be reused directly.
 
 | Comparison | Question answered |
 |---|---|
