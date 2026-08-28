@@ -1,6 +1,8 @@
 
 # BT-GEAR: Behavior-Transition-Aware Temporal Decay for GEAR
 
+[English](README.md) | [简体中文](README_zh.md)
+
 BT-GEAR is a research prototype for multi-behavior sequential recommendation. It extends the official implementation of **GEAR: Generalized Alternating Regressor for Multi-Behavior Sequential Recommendation** with a behavior-transition-aware temporal attention bias.
 
 ## Architecture
