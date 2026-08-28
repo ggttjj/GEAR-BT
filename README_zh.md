@@ -30,10 +30,65 @@ $$
 
 模型只改变底层行为注意力模块中的时间偏置。物品分支、上层交替 Transformer、预测头和训练损失均保持不变，使 BT-GEAR 与 GEAR 之间的比较更加受控且易于解释。
 
+## 消融实验设计
+
+消融实验包含四个受控模型。四个模型使用相同的物品分支、行为分支、交替 Transformer、预测头、损失函数、数据划分和评测方式，只改变时间衰减系数的参数化方法。
+
+### GEAR
+
+原始基线为每个注意力头设置一个固定的时间衰减系数：
+
+$$
+\Phi_{ij}^{(h)}=-\alpha_h\log(1+\Delta t_{ij}).
+$$
+
+这些系数不参与梯度更新，也不区分行为类型。
+
+### GEAR-T
+
+GEAR-T 将固定的注意力头级系数改成可学习的非负系数：
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_h)\log(1+\Delta t_{ij}).
+$$
+
+该模型用于检验性能提升是否仅来自“让 GEAR 原有的时间斜率参与训练”。
+
+### BT-GEAR-S
+
+BT-GEAR-S 学习一张由所有注意力头共享的行为转移矩阵：
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{b_i,b_j})\log(1+\Delta t_{ij}).
+$$
+
+矩阵的行表示当前查询行为 $b_i$，列表示历史键行为 $b_j$。该模型用于检验在不区分注意力头的情况下，显式区分行为转移是否有效。后缀 `S` 表示所有注意力头共享同一张转移矩阵。
+
+### BT-GEAR
+
+完整 BT-GEAR 为每个注意力头分别学习一张行为转移矩阵：
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
+$$
+
+Retail 使用两个注意力头和四种有效行为，因此 GEAR-T 学习 2 个有效衰减系数，BT-GEAR-S 学习 $4\times4=16$ 个，完整 BT-GEAR 学习 $2\times4\times4=32$ 个。代码还会保存 padding 对应的行和列，所以实际参数张量分别为 $5\times5$ 和 $2\times5\times5$；解释和可视化时不包含 padding 参数。
+
+| 对比组合 | 回答的问题 |
+|---|---|
+| GEAR vs. GEAR-T | 让原始注意力头级时间斜率参与训练是否有效？ |
+| GEAR-T vs. BT-GEAR | 根据行为转移确定衰减系数是否带来额外价值？ |
+| BT-GEAR-S vs. BT-GEAR | 每个注意力头使用独立转移矩阵是否有用？ |
+| GEAR vs. BT-GEAR | 完整的行为转移感知方案能否提升原始基线？ |
+
 ## 主要文件
 
 - `src/models/BTGEAR.py`：行为转移感知时间衰减模型。
+- `src/models/BTGEARS.py`：所有注意力头共享行为转移矩阵的消融模型。
+- `src/models/GEART.py`：可学习注意力头级时间衰减消融模型。
 - `src/configs/retail_btgear.yaml`：Retail 数据集上的 BT-GEAR 配置。
+- `src/configs/retail_btgear_s.yaml`：Retail 数据集上的 BT-GEAR-S 配置。
+- `src/configs/retail_geart.yaml`：Retail 数据集上的 GEAR-T 配置。
 - `scripts/visualize_transition_decay.py`：从检查点生成衰减矩阵热力图的脚本。
 - `src/models/GEAR.py`：原始 GEAR 模型实现。
 - `src/configs/retail.yaml`：适用于 8 GB 显存的基线配置。

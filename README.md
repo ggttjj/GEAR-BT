@@ -31,10 +31,65 @@ The `softplus` function keeps every decay coefficient non-negative. The transiti
 
 Only the temporal bias of the lower behavior-attention blocks is changed. The item branch, upper alternating Transformer, prediction heads, and training loss remain unchanged, making the comparison with GEAR controlled and interpretable.
 
+## Ablation Study Design
+
+The ablation study uses four controlled variants. They share the same item branch, behavior branch, alternating Transformer, prediction heads, loss functions, dataset split, and evaluation protocol. Only the parameterization of the temporal decay coefficient is changed.
+
+### GEAR
+
+The original baseline uses one fixed decay coefficient for each attention head:
+
+$$
+\Phi_{ij}^{(h)}=-\alpha_h\log(1+\Delta t_{ij}).
+$$
+
+The coefficients are not updated by gradient descent and do not depend on the behavior types.
+
+### GEAR-T
+
+GEAR-T replaces the fixed head-wise coefficients with learnable positive coefficients:
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_h)\log(1+\Delta t_{ij}).
+$$
+
+This variant tests whether an improvement comes only from making GEAR's temporal slopes trainable.
+
+### BT-GEAR-S
+
+BT-GEAR-S learns one behavior-transition matrix shared by all attention heads:
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{b_i,b_j})\log(1+\Delta t_{ij}).
+$$
+
+The row represents the current query behavior $b_i$, and the column represents the historical key behavior $b_j$. This variant tests whether distinguishing behavior transitions is useful without head-specific matrices. The suffix `S` means that the transition matrix is shared across heads.
+
+### BT-GEAR
+
+The full model learns a separate behavior-transition matrix for every attention head:
+
+$$
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
+$$
+
+For Retail with two attention heads and four valid behavior types, GEAR-T learns 2 valid decay coefficients, BT-GEAR-S learns $4\times4=16$, and BT-GEAR learns $2\times4\times4=32$. The implementation also stores a padding row and column, so the actual tensors have shapes $5\times5$ and $2\times5\times5$; the padding entries are excluded from interpretation and visualization.
+
+| Comparison | Question answered |
+|---|---|
+| GEAR vs. GEAR-T | Does learning the original head-wise temporal slope help? |
+| GEAR-T vs. BT-GEAR | Does conditioning decay on the behavior transition add value? |
+| BT-GEAR-S vs. BT-GEAR | Is a separate transition matrix for each attention head useful? |
+| GEAR vs. BT-GEAR | Does the complete behavior-transition-aware design improve the baseline? |
+
 ## Main Files
 
 - `src/models/BTGEAR.py`: behavior-transition-aware temporal decay model.
+- `src/models/BTGEARS.py`: behavior-transition matrix shared across attention heads.
+- `src/models/GEART.py`: learnable head-wise temporal decay ablation.
 - `src/configs/retail_btgear.yaml`: BT-GEAR configuration for the Retail dataset.
+- `src/configs/retail_btgear_s.yaml`: BT-GEAR-S configuration for the Retail dataset.
+- `src/configs/retail_geart.yaml`: GEAR-T configuration for the Retail dataset.
 - `scripts/visualize_transition_decay.py`: checkpoint-to-heatmap visualization script.
 - `src/models/GEAR.py`: unchanged upstream GEAR implementation.
 - `src/configs/retail.yaml`: memory-safe baseline configuration used on an 8 GB GPU.
