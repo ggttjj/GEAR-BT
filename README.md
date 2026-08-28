@@ -174,17 +174,26 @@ The coefficients vary substantially across both behavior transitions and attenti
 
 ## Preliminary Results
 
-The following are best validation results from the current single-seed (`seed=42`) Retail pre-study. The original GEAR run was trained through Epoch 82; BT-GEAR was still training when these values were recorded.
+The following table reports the completed Retail pre-study with a single random seed (`seed=42`). All variants use the same data split and evaluation protocol. Each row reports the checkpoint selected by its best validation NDCG@10; Epoch indices are zero-based.
 
-| Metric | GEAR best | Epoch | BT-GEAR best | Epoch | Relative change |
-|---|---:|---:|---:|---:|---:|
-| NDCG@10 | 0.715395 | 80 | **0.715942** | 26 | **+0.08%** |
-| Recall@10 | 0.830635 | 80 | **0.832336** | 27 | **+0.20%** |
-| NDCG@5 | 0.696784 | 80 | **0.697569** | 26 | **+0.11%** |
-| Recall@5 | 0.773137 | 80 | **0.775801** | 27 | **+0.34%** |
-| NDCG@1 | **0.608378** | 76 | 0.608017 | 26 | -0.06% |
+| Model | Best Epoch | NDCG@1 | NDCG@5 | NDCG@10 | Recall@5 | Recall@10 |
+|---|---:|---:|---:|---:|---:|---:|
+| GEAR | 80 | 0.606951 | 0.696784 | 0.715395 | 0.773137 | 0.830635 |
+| GEAR-T | 49 | 0.608516 | 0.702169 | 0.720023 | 0.781388 | 0.836617 |
+| BT-GEAR-S | 62 | 0.618110 | 0.704820 | 0.723470 | 0.779890 | 0.837310 |
+| **BT-GEAR** | **78** | **0.619310** | **0.710020** | **0.728080** | **0.788080** | **0.843930** |
 
-BT-GEAR currently improves four of the five best-to-best ranking metrics and improves all five metrics when compared with GEAR at the same Epoch 27. These results support the feasibility of behavior-transition-aware temporal decay, but they are preliminary: multiple random seeds, additional datasets, and statistical significance tests are still required for a publication-level conclusion.
+Compared with the original GEAR checkpoint selected by NDCG@10, the full BT-GEAR achieves:
+
+| Metric | Absolute improvement | Relative improvement |
+|---|---:|---:|
+| NDCG@1 | +0.012359 | +2.04% |
+| NDCG@5 | +0.013236 | +1.90% |
+| NDCG@10 | +0.012685 | +1.77% |
+| Recall@5 | +0.014943 | +1.93% |
+| Recall@10 | +0.013295 | +1.60% |
+
+The full BT-GEAR improves all five reported metrics over GEAR. GEAR-T and BT-GEAR-S also improve NDCG@10, providing controlled evidence that learnable temporal decay, behavior-transition conditioning, and head-specific transition matrices each contribute to the final result. These are still single-seed preliminary results; additional random seeds, datasets, and statistical significance tests are required for a publication-level conclusion.
 
 ## Reproducibility Notes
 
