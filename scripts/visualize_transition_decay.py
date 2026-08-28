@@ -1,5 +1,3 @@
-"""Visualize BT-GEAR's learned behavior-transition decay coefficients."""
-
 import argparse
 import csv
 import json
@@ -89,7 +87,6 @@ def load_decay_coefficients(checkpoint):
             f"{tuple(logits.shape)}."
         )
 
-    # Index 0 is padding in BT-GEAR and is excluded from the 4x4 visualization.
     coefficients = F.softplus(logits).detach().cpu().numpy()[:, 1:, 1:]
     return coefficients, payload, matching_keys[0]
 

@@ -6,16 +6,6 @@ from .GEAR import GEAR
 
 
 class BTGEAR(GEAR):
-    """GEAR with behavior-transition-aware temporal decay.
-
-    For attention head h, query behavior b_i, and key behavior b_j, the
-    temporal bias is
-
-        -softplus(alpha[h, b_i, b_j]) * log(1 + delta_t[i, j]).
-
-    Index 0 is reserved for padding, matching GEAR's behavior embedding.
-    """
-
     def __init__(
         self,
         max_len: int = None,
@@ -40,9 +30,6 @@ class BTGEAR(GEAR):
 
         self.n_b = n_b
 
-        # Initialize every behavior transition with GEAR's original
-        # head-specific slope. This makes BTGEAR equivalent to GEAR at the
-        # start of training, before transition-specific parameters diverge.
         initial_decay = self.slopes[:, None, None].expand(
             n_head, n_b + 1, n_b + 1
         ).clone()
@@ -50,11 +37,9 @@ class BTGEAR(GEAR):
         self.transition_decay_logits = nn.Parameter(inverse_softplus)
 
     def decay_coefficients(self):
-        """Return the positive learned coefficients [head, query, key]."""
         return F.softplus(self.transition_decay_logits)
 
     def _build_transition_time_bias(self, behavior_seqs, time_gaps):
-        """Build a [batch, head, query_pos, key_pos] temporal bias tensor."""
         batch_size, seq_len = behavior_seqs.shape
 
         query_behaviors = behavior_seqs.unsqueeze(2).expand(-1, -1, seq_len)
@@ -78,7 +63,6 @@ class BTGEAR(GEAR):
         device = item_seqs.device
         time_bias = self._build_transition_time_bias(behavior_seqs, time_bias)
 
-        # The remaining architecture is unchanged from the official GEAR.
         seqs_i = self.item_emb(item_seqs)
         seqs_b = self.behavior_emb(behavior_seqs)
 
