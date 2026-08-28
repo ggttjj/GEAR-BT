@@ -22,7 +22,7 @@ where the decay coefficient $\alpha_h$ depends on the attention head but not on 
 BT-GEAR conditions the decay coefficient on both the current query behavior $b_i$ and the historical key behavior $b_j$:
 
 $$
-\Phi_{ij}^{(h)}=-\operatorname{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
+\Phi_{ij}^{(h)}=-\mathrm{softplus}(\theta_{h,b_i,b_j})\log(1+\Delta t_{ij}).
 $$
 
 The `softplus` function keeps every decay coefficient non-negative. The transition parameters are initialized from GEAR's original head-wise slopes, so BT-GEAR starts from the same temporal bias as GEAR and learns transition-specific differences during training.
