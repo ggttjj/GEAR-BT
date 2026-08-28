@@ -166,11 +166,11 @@ python scripts/visualize_transition_decay.py \
 
 Rows represent the current query behavior $b_i$, while columns represent the historical key behavior $b_j$. A larger coefficient produces faster temporal decay and a stronger attention penalty for an old interaction; a smaller coefficient preserves that transition's influence for longer.
 
-The following heatmaps were extracted from the Epoch 31 Retail checkpoint:
+The following heatmaps were extracted from the final archived Retail checkpoint at Epoch 90. Epoch indices are zero-based.
 
-![Learned behavior-transition decay heatmaps](figures/transition_decay_epoch31/transition_decay_heatmaps.png)
+![Learned behavior-transition decay heatmaps](figures/transition_decay_epoch90/transition_decay_heatmaps.png)
 
-The coefficients vary substantially across both behavior transitions and attention heads (approximately 0.006 to 2.901 in this checkpoint). This confirms that the model has moved away from its behavior-agnostic initialization and learned head-specific transition patterns. The heatmap is an interpretation of learned parameters rather than evidence of a causal behavioral relationship.
+The validation log reaches its best NDCG@10 of 0.728079 at Epoch 78, but that checkpoint was not retained; the archived Epoch 90 checkpoint has NDCG@10 of 0.725703. The figure therefore interprets the final stored model rather than claiming to visualize the exact best-validation checkpoint. Its coefficients vary substantially across behavior transitions and attention heads, from approximately 0.003 to 2.082. In particular, the coefficient for historical `pv` to current `buy` is 2.082 in head 1 but only 0.005 in head 2, showing complementary fast- and slow-decay patterns. The heatmap is an interpretation of learned global parameters rather than evidence of a causal behavioral relationship. The per-head matrices, head mean, and checkpoint metadata are provided in the same figure directory.
 
 ## Preliminary Results
 
