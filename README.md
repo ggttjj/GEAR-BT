@@ -5,7 +5,11 @@ BT-GEAR is a research prototype for multi-behavior sequential recommendation. It
 
 > This repository is based on [Gnimixy/GEAR](https://github.com/Gnimixy/GEAR). The upstream Git history is preserved, and the original `src/models/GEAR.py` is not overwritten.
 
-![GEAR architecture](GEAR.png)
+## Architecture
+
+![BT-GEAR architecture](BT-GEAR.png)
+
+BT-GEAR preserves GEAR's item-attention branch, behavior-attention branch, alternating cross-signal fusion, and autoregressive prediction heads. The architectural change is localized to the temporal bias in behavior-specific attention, where the fixed head-wise coefficient is replaced by a learnable behavior-transition-aware decay matrix.
 
 ## Motivation
 
