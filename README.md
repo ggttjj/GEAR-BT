@@ -172,28 +172,18 @@ The following heatmaps were extracted from the final archived Retail checkpoint 
 
 The validation log reaches its best NDCG@10 of 0.728079 at Epoch 78, but that checkpoint was not retained; the archived Epoch 90 checkpoint has NDCG@10 of 0.725703. The figure therefore interprets the final stored model rather than claiming to visualize the exact best-validation checkpoint. Its coefficients vary substantially across behavior transitions and attention heads, from approximately 0.003 to 2.082. In particular, the coefficient for historical `pv` to current `buy` is 2.082 in head 1 but only 0.005 in head 2, showing complementary fast- and slow-decay patterns. The heatmap is an interpretation of learned global parameters rather than evidence of a causal behavioral relationship. The per-head matrices, head mean, and checkpoint metadata are provided in the same figure directory.
 
-## Preliminary Results
+## Retail Pre-study Results (Two Seeds)
 
-The following table reports the completed Retail pre-study with a single random seed (`seed=42`). All variants use the same data split and evaluation protocol. Each row reports the checkpoint selected by its best validation NDCG@10; Epoch indices are zero-based.
+The final Retail pre-study uses two random seeds (`42` and `2024`). All variants use the same data split and evaluation protocol. Within each seed, the checkpoint with the best validation NDCG@10 is selected, and the table reports the arithmetic mean over the two seeds.
 
-| Model | Best Epoch | NDCG@1 | NDCG@5 | NDCG@10 | Recall@5 | Recall@10 |
-|---|---:|---:|---:|---:|---:|---:|
-| GEAR | 80 | 0.606951 | 0.696784 | 0.715395 | 0.773137 | 0.830635 |
-| GEAR-T | 49 | 0.608516 | 0.702169 | 0.720023 | 0.781388 | 0.836617 |
-| BT-GEAR-S | 62 | 0.618110 | 0.704820 | 0.723470 | 0.779890 | 0.837310 |
-| **BT-GEAR** | **78** | **0.619310** | **0.710020** | **0.728080** | **0.788080** | **0.843930** |
+| Model | Mean NDCG@10 | Absolute change vs. GEAR | Relative change vs. GEAR |
+|---|---:|---:|---:|
+| GEAR | 0.71665 | - | - |
+| GEAR-T | 0.71670 | +0.00005 | +0.01% |
+| BT-GEAR-S | 0.72456 | +0.00791 | +1.10% |
+| **BT-GEAR** | **0.72474** | **+0.00809** | **+1.13%** |
 
-Compared with the original GEAR checkpoint selected by NDCG@10, the full BT-GEAR achieves:
-
-| Metric | Absolute improvement | Relative improvement |
-|---|---:|---:|
-| NDCG@1 | +0.012359 | +2.04% |
-| NDCG@5 | +0.013236 | +1.90% |
-| NDCG@10 | +0.012685 | +1.77% |
-| Recall@5 | +0.014943 | +1.93% |
-| Recall@10 | +0.013295 | +1.60% |
-
-The full BT-GEAR improves all five reported metrics over GEAR. GEAR-T and BT-GEAR-S also improve NDCG@10, providing controlled evidence that learnable temporal decay, behavior-transition conditioning, and head-specific transition matrices each contribute to the final result. These are still single-seed preliminary results; additional random seeds, datasets, and statistical significance tests are required for a publication-level conclusion.
+GEAR-T has almost no average gain over GEAR, so the two-seed results do not establish a stable benefit from merely making the original head-wise slopes learnable. Both BT-GEAR-S and BT-GEAR consistently improve the mean result, supporting the value of conditioning temporal decay on behavior transitions. The difference between BT-GEAR and BT-GEAR-S is only `0.00018`, so the additional benefit of using a separate transition matrix for every attention head remains inconclusive. These results support behavior-transition-aware temporal decay as a whole, but they do not justify claiming that every individual component contributes independently. More random seeds, datasets, and statistical significance tests are still needed for a publication-level conclusion.
 
 ## Reproducibility Notes
 
